@@ -177,7 +177,7 @@ function Get-AuthorName {
 function Select-Author {
     param(
         # Строгая типизация для коллекции XML-узлов .NET
-        [System.Xml.XmlNodeList]$Nodes
+        [System.Collections.IList]$Nodes
     )
     
     Write-Host "`n[!] В файле найдено несколько авторов ($($Nodes.Count)). Требуется ваш выбор:" -ForegroundColor Cyan
@@ -186,18 +186,17 @@ function Select-Author {
         # Оптимизация: Используем .NET методы вместо тяжелого -match '\S'
         $ln = $Nodes[$i].'last-name'
         $fn = $Nodes[$i].'first-name'
-
         $hasLn = -not [string]::IsNullOrWhiteSpace($ln)
         $hasFn = -not [string]::IsNullOrWhiteSpace($fn)
     
         # Быстрый switch по флагам присутствия данных
         $display = switch ($true) {
-            { $hasLn -and $hasFn } { "$($ln.Trim()), $($fn.Trim())" }
-            { $hasLn }             { $ln.Trim() }
-            { $hasFn }             { $fn.Trim() }
+            ( $hasLn -and $hasFn ) { "$ln, $fn" ; break }
+            { $hasLn }             { $ln }
+            { $hasFn }             { $fn }
             Default                { "Автор без данных (ID: $i)" }
         }
-        Write-Host "[$($i + 1)] $display"
+        Write-Host "[$($i+1)] $display"
     }
 
     # Цикл безопасного ввода (оставлен без изменений — он идеален)

@@ -45,10 +45,10 @@ function Get-FictBookName {
     }
 
     # Логика определения автора
-    $Authors = $TitleNodes.author
+    $Authors = @($TitleNodes.author)
     switch ($Authors.Count) {
         0 { $Author = "Unknown" }
-        1 { $Author = Get-AuthorName $Authors }
+        1 { $Author = Get-AuthorName $Authors[0] }
         default { 
             # Хэш-таблицу задействуем только при наличии серии
             $SeriesKey = if ($Seria) { $Seria.ToLower() } else { $null }
@@ -96,7 +96,7 @@ function Get-FictBookName {
 
     if ($Number) {
         $TextPattern = if ($Number -gt 99) { [regex]::Escape($TextNum) } else { "${TextNum}[а-яё]{2}" }
-        $NumPattern = "\b((Том|Книга)\s*)?(0*$Number|$RomanNum|$TextPattern)\b"
+        $NumPattern = "\b(([Тт]ом|[Кк]нига)\s*)?(0*$Number|$RomanNum|$TextPattern)\b"
         $Title = [regex]::Replace($Title, $NumPattern, " ")
     }
 
