@@ -191,9 +191,9 @@ function Select-Author {
     
         # Быстрый switch по флагам присутствия данных
         $display = switch ($true) {
-            ( $hasLn -and $hasFn ) { "$ln, $fn" ; break }
-            { $hasLn }             { $ln }
-            { $hasFn }             { $fn }
+            { $hasLn -and $hasFn } { "$ln, $fn" ; break }
+            { $hasLn }             { $ln ; break }
+            { $hasFn }             { $fn ; break }
             Default                { "Автор без данных (ID: $i)" }
         }
         Write-Host "[$($i+1)] $display"
