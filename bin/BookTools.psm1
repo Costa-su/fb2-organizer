@@ -181,25 +181,12 @@ function Select-Author {
     )
     
     Write-Host "`n[!] В файле найдено несколько авторов ($($Nodes.Count)). Требуется ваш выбор:" -ForegroundColor Cyan
-    
     for ($i = 0; $i -lt $Nodes.Count; $i++) {
-        # Оптимизация: Используем .NET методы вместо тяжелого -match '\S'
-        $ln = $Nodes[$i].'last-name'
-        $fn = $Nodes[$i].'first-name'
-        $hasLn = -not [string]::IsNullOrWhiteSpace($ln)
-        $hasFn = -not [string]::IsNullOrWhiteSpace($fn)
-    
-        # Быстрый switch по флагам присутствия данных
-        $display = switch ($true) {
-            { $hasLn -and $hasFn } { "$ln, $fn" ; break }
-            { $hasLn }             { $ln ; break }
-            { $hasFn }             { $fn ; break }
-            Default                { "Автор без данных (ID: $i)" }
-        }
-        Write-Host "[$($i+1)] $display"
+        # Приведение к [string] и .Trim() вытащат чистый текст, либо оставят пустую строку ""
+        Write-Host "[$($i + 1)]" $Nodes[$i].'last-name' $Nodes[$i].'first-name'
     }
 
-    # Цикл безопасного ввода (оставлен без изменений — он идеален)
+    # Цикл безопасного ввода
     $choice = 0
     do {
         $rawInput = Read-Host "Введите номер нужного автора (от 1 до $($Nodes.Count))"
