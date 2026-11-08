@@ -18,23 +18,21 @@ if ($null -eq $script:SeriesAuthorCache) {
 # ==============================================================================
 
 function Get-FictBookName {
+    [CmdletBinding()]
     param(
         [string]$FileFullPath
     )
-
-    # Заранее вытаскиваем расширение из строки пути (.fb2) нативным .NET методом
-    $extension = [System.IO.Path]::GetExtension($FileFullPath)
 
     # Быстрое и строгое создание XmlDocument
     $xml = [System.Xml.XmlDocument]::new()
     try {
         $xml.Load($FileFullPath)
     } catch {
-        return "Unknown_BadXMLFile$extension"
+        return "Unknown_BadXMLFile.fb2"
     }
 
     $TitleNodes = $xml.FictionBook.description.'title-info'
-    if ($null -eq $TitleNodes) { return $null }
+    if ($null -eq $TitleNodes) { return "Unknown_NoTitle" }
 
     # Извлекаем серию (если её нет в XML, возвращается $null)
     $Seria = $TitleNodes.sequence.name
@@ -71,19 +69,20 @@ function Get-FictBookName {
 
     # Логика обработки номера серии
     $Number = $TitleNodes.sequence.number
-    if (-not [string]::IsNullOrWhiteSpace($Number)) {
+    if ([string]::IsNullOrWhiteSpace($Number)) {
+        $Number   = $null
+    } else {
         $Number = $Number.TrimStart('0')
         $RomanNum = ConvertToRoman $Number
         $TextNum = Get-OrdinalRu $Number
-        # Отрезаем окончание (например, "ая" от "первая"), если числительное текстовое
-        if (-not [string]::IsNullOrWhiteSpace($TextNum) -and $Number -le 99) {
-            $TextNum = $TextNum.Remove($TextNum.Length - 2)
+        # Отрезаем окончание и формируем готовый паттерн для регулярного выражения
+        $TextPattern = if ([int]$Number -le 99) {
+            "$($TextNum.Remove($TextNum.Length - 2))[а-яё]{2}"
+        } else {
+            [regex]::Escape($TextNum)
         }
-    } else {
-        $Number   = $null
-        $RomanNum = $null
-        $TextNum  = $null
-    }
+        $NumPattern = "\b((том|книга)\s*)?(0*$Number|$RomanNum|$TextPattern)\b"
+   }
 
     # ==============================================================================
     # 1. Точечное удаление серии и номера из самого Title (защита от дублирования)
@@ -91,13 +90,13 @@ function Get-FictBookName {
     $Title = $TitleNodes.'book-title'
 
     if ($Seria) {
-        $Title = [regex]::Replace($Title, "\b$([regex]::Escape($Seria))\b", " ")
+        $Title = [regex]::Replace($Title, "\b$([regex]::Escape($Seria))\b", " ",
+                 [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
     }
 
     if ($Number) {
-        $TextPattern = if ($Number -gt 99) { [regex]::Escape($TextNum) } else { "${TextNum}[а-яё]{2}" }
-        $NumPattern = "\b(([Тт]ом|[Кк]нига)\s*)?(0*$Number|$RomanNum|$TextPattern)\b"
-        $Title = [regex]::Replace($Title, $NumPattern, " ")
+        $Title = [regex]::Replace($Title, $NumPattern, " ",
+                 [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
     }
 
     # ==============================================================================
@@ -111,5 +110,5 @@ function Get-FictBookName {
     $FinalName = [regex]::Replace($CleanName, "[\s_]+", "_").Trim('_')
     
     # Отправляем идеально чистую строку в транслит и добавляем расширение
-    return (TranslitToLAT $FinalName) + $extension
+    return "$(TranslitToLAT $FinalName).fb2"
 }

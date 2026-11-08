@@ -40,7 +40,7 @@ $currentDate = Get-Date
 foreach ($file in $fb2Files) {
     $newName = Get-FictBookName $file.FullName
     
-    if (-not [string]::IsNullOrWhiteSpace($newName) -and $newName -ne $file.Name) {
+    if ($newName -ne $file.Name) {
         
         # Используем быстрый .NET метод для переименования
         $destinationPath = Join-Path $file.DirectoryName $newName
