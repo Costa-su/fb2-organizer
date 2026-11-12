@@ -81,7 +81,7 @@ function Get-FictBookName {
         } else {
             [regex]::Escape($TextNum)
         }
-        $NumPattern = "\b((том|книга)\s*)?(0*$Number|$RomanNum|$TextPattern)\b"
+        $NumPattern = "\b((том|книга|часть)\s*)?(0*$Number|$RomanNum|$TextPattern)\b"
    }
 
     # ==============================================================================
