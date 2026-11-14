@@ -90,8 +90,14 @@ function Get-FictBookName {
     $Title = $TitleNodes.'book-title'
 
     if ($Seria) {
-        $Title = [regex]::Replace($Title, "\b$([regex]::Escape($Seria))\b", " ",
-                 [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+         # 1. Экранируем спецсимволы в названии серии
+        $EscapedSeria = [regex]::Escape($Seria)
+        
+        # 2. Делаем любые кавычки в шаблоне универсальными И необязательными (символ ?)
+        $FlexibleSeria = [regex]::Replace($EscapedSeria, '[«»"„“”'']', '[«»"„“”'']?')
+        
+        # 3. Удаляем серию с проверкой, что рядом нет букв и цифр
+        $Title = [regex]::Replace($Title, "(?<!\w)$FlexibleSeria(?!\w)", " ")
     }
 
     if ($Number) {
